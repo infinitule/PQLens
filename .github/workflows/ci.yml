@@ -14,10 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ensure OpenSSL >= 3.5 (provides ML-KEM)
-        # ubuntu-latest ships OpenSSL 3.x; print it so CI logs prove what the
-        # ML-KEM backend bound to. If < 3.5, the smoke tests skip (not fail).
-        run: openssl version
+      # ubuntu-latest ships OpenSSL 3.0 (no ML-KEM/ML-DSA). pqlens requires
+      # OpenSSL >= 3.5, so we provide one from conda-forge and point pqlens at it
+      # via PQLENS_OPENSSL. This makes CI a supported environment and lets the
+      # PQC-dependent tests actually run (rather than skip and tank coverage).
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: ossl
+          create-args: openssl>=3.5
+          cache-environment: true
+
+      - name: Configure PQC-capable OpenSSL for pqlens
+        run: |
+          OSSL="$MAMBA_ROOT_PREFIX/envs/ossl/bin/openssl"
+          "$OSSL" version
+          "$OSSL" list -kem-algorithms | grep -i ml-kem        # fail fast if absent
+          echo "PQLENS_OPENSSL=$OSSL" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v5
         with:
@@ -28,17 +40,23 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
+      - name: Assert the audited backend is available (no silent skips)
+        run: |
+          python -m pqlens --backends
+          python -c "from pqlens.backends import available_backends; \
+            assert available_backends(), 'expected a PQC OpenSSL backend in CI'"
+
       - name: Lint
         run: ruff check .
 
       - name: Test (with coverage floor)
         run: pytest -ra --cov=pqlens --cov-report=term-missing --cov-fail-under=88
 
-      - name: CLI self-test + measure
+      - name: CLI smoke (measure + hybrid + compliance)
         run: |
-          python -m pqlens --backends
-          python -m pqlens --selftest || true
-          python -m pqlens --measure --algorithms ML-KEM-768,ML-KEM-1024,X-Wing --iterations 5 || true
+          python -m pqlens --selftest
+          python -m pqlens --measure --algorithms ML-KEM-768,ML-KEM-1024,X-Wing --iterations 5
+          python -m pqlens --hybrid-selftest
 
   package:
     runs-on: ubuntu-latest
@@ -54,11 +72,14 @@ jobs:
           python -m build
 
       - name: Install the built wheel in a clean venv and smoke-test it
+        # Backend-independent: a fresh runner has no PQC OpenSSL, so we only
+        # check the wheel installs, imports, and runs — not that a backend exists.
         run: |
           python -m venv /tmp/clean
           /tmp/clean/bin/python -m pip install dist/*.whl
-          /tmp/clean/bin/pqlens --backends
+          /tmp/clean/bin/python -m pqlens --version
           /tmp/clean/bin/python -c "import pqlens; assert pqlens.__all__"
+          /tmp/clean/bin/python -m pqlens --backends || echo "(no PQC backend on this runner — expected)"
 
       - name: Assert data tables shipped in the wheel
         run: |
