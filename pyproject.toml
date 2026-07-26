@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pqlens"
+version = "0.1.0"
+description = "A lens on your post-quantum migration: measure, discover, and price PQC migration. Not a crypto implementation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "pqlens contributors" }]
+keywords = ["post-quantum", "pqc", "crypto-agility", "ml-kem", "ml-dsa", "migration", "compliance"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Security :: Cryptography",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+# We BIND to audited implementations; we never reimplement primitives.
+#   - cryptography (pyca): classical baselines (X25519/RSA/EC) used in later phases.
+#   - OpenSSL >= 3.5 (system binary): ML-KEM / ML-DSA backend (runtime dependency).
+dependencies = [
+    "cryptography>=42",
+]
+
+[project.optional-dependencies]
+# In-memory PQC binding; needs the liboqs C library. See DECISIONS.md D-002.
+liboqs = ["liboqs-python>=0.10"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5"]
+
+[project.scripts]
+pqlens = "pqlens.__main__:main"
+
+[project.urls]
+Homepage = "https://example.invalid/pqlens"
+Issues = "https://example.invalid/pqlens/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pqlens"]
+# Ship the versioned data tables and the typing marker inside the wheel.
+artifacts = ["src/pqlens/data/*.json", "src/pqlens/py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["pqlens"]
+branch = true
+
+[tool.coverage.report]
+# Lines that are environment-dependent (no-backend fallbacks) are excluded.
+exclude_also = ["pragma: no cover", "raise NotImplementedError"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

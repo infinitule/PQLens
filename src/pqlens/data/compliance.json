@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "note": "Versioned mapping from algorithm/family to standards. This file is the SINGLE SOURCE OF TRUTH for compliance verdicts; the engine in compliance.py applies it generically and hardcodes no standard/algorithm verdict. Statuses are advisory engineering signals, not legal determinations. Where a binding requirement cannot be cited, the row uses status 'advisory' and says so.",
+  "status_vocabulary": {
+    "compliant": "algorithm satisfies the standard's requirement",
+    "non-compliant": "standard requires migrating away from this algorithm",
+    "below-required-level": "standardized, but below the parameter level this standard mandates",
+    "advisory": "transitional/roadmap signal; not a citable binding determination",
+    "not-applicable": "the standard does not govern this algorithm class"
+  },
+  "severity_rank": {"non-compliant": 3, "below-required-level": 2, "advisory": 1, "compliant": 0, "not-applicable": -1},
+  "standards": {
+    "FIPS-203": {"title": "ML-KEM (key encapsulation)", "citation": "NIST FIPS 203, Module-Lattice-Based KEM Standard (2024)"},
+    "FIPS-204": {"title": "ML-DSA (digital signature)", "citation": "NIST FIPS 204, Module-Lattice-Based Digital Signature Standard (2024)"},
+    "FIPS-205": {"title": "SLH-DSA (stateless hash-based signature)", "citation": "NIST FIPS 205, Stateless Hash-Based Digital Signature Standard (2024)"},
+    "CNSA-2.0": {"title": "NSA Commercial National Security Algorithm Suite 2.0", "citation": "NSA, CNSA 2.0 (2022); for NSS, specifies ML-KEM-1024 and ML-DSA-87 (Category 5) and deprecates classical PKC"},
+    "EU-PQC-ROADMAP": {"title": "EU coordinated PQC transition", "citation": "EU Coordinated Implementation Roadmap for the transition to PQC (2025); coordination guidance, NOT binding regulation; member-state timelines vary"}
+  },
+  "rules": [
+    {"match": {"family": "RSA"}, "assessments": {
+      "FIPS-203": {"status": "not-applicable", "rationale": "RSA is not an ML-KEM algorithm."},
+      "FIPS-204": {"status": "not-applicable", "rationale": "RSA is not an ML-DSA algorithm."},
+      "CNSA-2.0": {"status": "non-compliant", "rationale": "Classical RSA; CNSA 2.0 mandates migration to PQC for NSS."},
+      "EU-PQC-ROADMAP": {"status": "advisory", "rationale": "Quantum-vulnerable; flagged for transition by the EU roadmap (timeline advisory)."}
+    }},
+    {"match": {"family": "ECDSA"}, "assessments": {
+      "FIPS-204": {"status": "not-applicable", "rationale": "Classical ECDSA is not an ML-DSA algorithm."},
+      "CNSA-2.0": {"status": "non-compliant", "rationale": "Classical ECDSA signature; CNSA 2.0 mandates migration to ML-DSA."},
+      "EU-PQC-ROADMAP": {"status": "advisory", "rationale": "Quantum-vulnerable signature; transition advised."}
+    }},
+    {"match": {"family": "ECDH"}, "assessments": {
+      "FIPS-203": {"status": "not-applicable", "rationale": "Classical ECDH is not an ML-KEM algorithm."},
+      "CNSA-2.0": {"status": "non-compliant", "rationale": "Classical ECDH/X25519 key exchange; CNSA 2.0 mandates migration to ML-KEM."},
+      "EU-PQC-ROADMAP": {"status": "advisory", "rationale": "Quantum-vulnerable key exchange; transition advised."}
+    }},
+    {"match": {"family": "DH"}, "assessments": {
+      "CNSA-2.0": {"status": "non-compliant", "rationale": "Classical finite-field DH; CNSA 2.0 mandates migration to ML-KEM."},
+      "EU-PQC-ROADMAP": {"status": "advisory", "rationale": "Quantum-vulnerable key exchange; transition advised."}
+    }},
+    {"match": {"family": "EdDSA"}, "assessments": {
+      "CNSA-2.0": {"status": "non-compliant", "rationale": "Classical EdDSA signature; CNSA 2.0 mandates migration to ML-DSA."},
+      "EU-PQC-ROADMAP": {"status": "advisory", "rationale": "Quantum-vulnerable signature; transition advised."}
+    }},
+    {"match": {"family": "ML-KEM"}, "assessments": {
+      "FIPS-203": {"status": "compliant", "rationale": "ML-KEM is the FIPS 203 KEM standard."},
+      "CNSA-2.0": {"status": "below-required-level", "rationale": "CNSA 2.0 specifies ML-KEM-1024 (Category 5) for NSS; this parameter set is below that level."},
+      "EU-PQC-ROADMAP": {"status": "compliant", "rationale": "PQC KEM aligned with the transition target."}
+    }},
+    {"match": {"algorithm": "ML-KEM-1024"}, "assessments": {
+      "FIPS-203": {"status": "compliant", "rationale": "FIPS 203 ML-KEM-1024."},
+      "CNSA-2.0": {"status": "compliant", "rationale": "Meets CNSA 2.0's ML-KEM-1024 (Category 5) requirement for NSS."},
+      "EU-PQC-ROADMAP": {"status": "compliant", "rationale": "PQC KEM aligned with the transition target."}
+    }},
+    {"match": {"family": "ML-DSA"}, "assessments": {
+      "FIPS-204": {"status": "compliant", "rationale": "ML-DSA is the FIPS 204 signature standard."},
+      "CNSA-2.0": {"status": "below-required-level", "rationale": "CNSA 2.0 specifies ML-DSA-87 (Category 5) for NSS; this parameter set is below that level."},
+      "EU-PQC-ROADMAP": {"status": "compliant", "rationale": "PQC signature aligned with the transition target."}
+    }},
+    {"match": {"algorithm": "ML-DSA-87"}, "assessments": {
+      "FIPS-204": {"status": "compliant", "rationale": "FIPS 204 ML-DSA-87."},
+      "CNSA-2.0": {"status": "compliant", "rationale": "Meets CNSA 2.0's ML-DSA-87 (Category 5) requirement for NSS."},
+      "EU-PQC-ROADMAP": {"status": "compliant", "rationale": "PQC signature aligned with the transition target."}
+    }},
+    {"match": {"family": "X-Wing"}, "assessments": {
+      "FIPS-203": {"status": "advisory", "rationale": "Hybrid (ML-KEM-768 + X25519): embeds a FIPS 203 component but the hybrid construction itself is not a FIPS standard."},
+      "CNSA-2.0": {"status": "advisory", "rationale": "Transitional hybrid; CNSA 2.0 targets standalone ML-KEM-1024 for NSS."},
+      "EU-PQC-ROADMAP": {"status": "compliant", "rationale": "Hybrid PQC commonly recommended for the transition period."}
+    }}
+  ]
+}

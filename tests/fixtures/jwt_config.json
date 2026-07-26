@@ -1,0 +1,6 @@
+{
+  "_comment": "pqlens discovery fixture (authored by pqlens). JWT alg usage.",
+  "access_token": { "alg": "RS256", "typ": "JWT" },
+  "id_token": { "alg": "ES256" },
+  "session_mac": { "alg": "HS256" }
+}

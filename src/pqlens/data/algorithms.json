@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "note": "Versioned algorithm size/param table. Every size carries a citation. Sizes flagged live_verifiable=true are confirmed at runtime by a real roundtrip through an audited backend before any report asserts them (pqlens guardrail #5). Raw key/ciphertext sizes are wire sizes (e.g. TLS 1.3 key_share), not DER/PEM-encoded sizes.",
+  "byte_units": "bytes",
+  "baseline": "X25519",
+  "algorithms": {
+    "X25519": {
+      "kind": "dh-kem",
+      "family": "ECDH",
+      "quantum_secure": false,
+      "public_key_bytes": 32,
+      "ciphertext_bytes": 32,
+      "shared_secret_bytes": 32,
+      "secret_key_bytes": 32,
+      "sources": ["RFC 7748 (X25519); ciphertext = responder ephemeral public key"],
+      "live_verifiable": true,
+      "verifying_backend": "cryptography"
+    },
+    "ML-KEM-512": {
+      "kind": "kem",
+      "family": "ML-KEM",
+      "quantum_secure": true,
+      "public_key_bytes": 800,
+      "ciphertext_bytes": 768,
+      "shared_secret_bytes": 32,
+      "secret_key_bytes": 1632,
+      "sources": ["FIPS 203, Table 3 (ek=800, dk=1632, c=768, K=32)"],
+      "live_verifiable": true,
+      "verifying_backend": "openssl"
+    },
+    "ML-KEM-768": {
+      "kind": "kem",
+      "family": "ML-KEM",
+      "quantum_secure": true,
+      "public_key_bytes": 1184,
+      "ciphertext_bytes": 1088,
+      "shared_secret_bytes": 32,
+      "secret_key_bytes": 2400,
+      "sources": [
+        "FIPS 203, Table 3 (ek=1184, dk=2400, c=1088, K=32)",
+        "Apple CryptoKit QuantumSecurityWithCryptoKit sample: encapsulation=1088 B, shared secret=32 B (REFERENCES.md R-001)",
+        "pqlens live OpenSSL 3.6.2 measurement: ct=1088 B, ss=32 B"
+      ],
+      "live_verifiable": true,
+      "verifying_backend": "openssl"
+    },
+    "ML-KEM-1024": {
+      "kind": "kem",
+      "family": "ML-KEM",
+      "quantum_secure": true,
+      "public_key_bytes": 1568,
+      "ciphertext_bytes": 1568,
+      "shared_secret_bytes": 32,
+      "secret_key_bytes": 3168,
+      "sources": ["FIPS 203, Table 3 (ek=1568, dk=3168, c=1568, K=32)"],
+      "live_verifiable": true,
+      "verifying_backend": "openssl"
+    },
+    "ML-DSA-44": {
+      "kind": "signature",
+      "family": "ML-DSA",
+      "quantum_secure": true,
+      "public_key_bytes": 1312,
+      "signature_bytes": 2420,
+      "secret_key_bytes": 2560,
+      "sources": ["FIPS 204, Table 2 (pk=1312, sig=2420, sk=2560)"],
+      "live_verifiable": false,
+      "verifying_backend": null
+    },
+    "ML-DSA-65": {
+      "kind": "signature",
+      "family": "ML-DSA",
+      "quantum_secure": true,
+      "public_key_bytes": 1952,
+      "signature_bytes": 3309,
+      "secret_key_bytes": 4032,
+      "sources": [
+        "FIPS 204, Table 2 (pk=1952, sig=3309, sk=4032)",
+        "Apple CryptoKit sample demonstrates MLDSA65 (REFERENCES.md R-001)"
+      ],
+      "live_verifiable": false,
+      "verifying_backend": null
+    },
+    "ML-DSA-87": {
+      "kind": "signature",
+      "family": "ML-DSA",
+      "quantum_secure": true,
+      "public_key_bytes": 2592,
+      "signature_bytes": 4627,
+      "secret_key_bytes": 4896,
+      "sources": [
+        "FIPS 204, Table 2 (pk=2592, sig=4627, sk=4896)",
+        "Apple CryptoKit sample demonstrates MLDSA87 (REFERENCES.md R-001)"
+      ],
+      "live_verifiable": false,
+      "verifying_backend": null
+    },
+    "X-Wing": {
+      "kind": "hybrid-kem",
+      "family": "X-Wing (ML-KEM-768 + X25519)",
+      "quantum_secure": true,
+      "public_key_bytes": 1216,
+      "ciphertext_bytes": 1120,
+      "shared_secret_bytes": 32,
+      "secret_key_bytes": 32,
+      "sources": [
+        "draft-connolly-cfrg-xwing-kem: pk = ML-KEM-768 ek (1184) + X25519 pk (32) = 1216; ct = ML-KEM-768 ct (1088) + X25519 (32) = 1120; ss = 32; sk = 32-byte seed",
+        "Demonstrated by Apple CryptoKit sample as XWingMLKEM768X25519 (REFERENCES.md R-001)"
+      ],
+      "live_verifiable": false,
+      "verifying_backend": null
+    }
+  }
+}
